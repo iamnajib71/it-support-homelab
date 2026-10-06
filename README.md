@@ -1,127 +1,77 @@
-# IT Ops Lab: AI service-desk copilot and small-office homelab
+# IT Support Homelab: VPN, file server, print server and Active Directory
 
-A self-hosted lab that shows how a small IT team can answer routine tickets faster **without letting AI make risky decisions**.
-Tickets come in through a webhook, an n8n pipeline triages them, finds the right knowledge base article with hybrid search,
-writes two candidate replies with two different local models, has a third call judge them, and then a rule-based policy gate
-decides whether the reply can go out automatically or must wait for a technician. Every model call goes through one gateway
-that handles routing, retries, fallback, rate limits, a cloud budget and a circuit breaker, and logs cost and latency to Postgres
-for a Grafana dashboard.
+A small-office IT environment I built and support end to end, running in Docker on one Windows PC. It has three labs that
+work together the way a real office does (staff connect over the **VPN**, open the **file shares**, and print to the **print
+server** that drops PDFs into the Scans share), plus a **directory server** for account administration and **monitoring**.
 
-Everything runs locally on Docker and Ollama. By default (`CLOUD_TIER=off`) no ticket data leaves the machine. If the optional
-cloud tier is switched on, only the redacted ticket text and the retrieved KB excerpts are sent, and only for the judging step.
+Every service is tested by scripts, and I broke and fixed three realistic faults on purpose, documented as service desk tickets.
 
-**For hiring managers:** this repo is about service desk judgement more than AI. Start with *Why the gate is rule-based* below
-(two real failures I caught in testing and how I fixed them), the KB articles in `kb/`, and the SLA and escalation policy in
-`kb/service-desk-policy.md`.
+> **Lab, not production.** All ports bind to 127.0.0.1, users are fictional, and the limits are listed at the bottom.
 
-Homelab evidence: [runbook](docs/homelab-runbook.md), [VPN connects but shares fail](docs/cases/01-vpn-shares.md),
-[Finance starter access denied](docs/cases/02-finance-starter.md), and [office-wide printing failure](docs/cases/03-office-printing.md).
-All three are worked lab simulations with captured diagnostics; [verification transcripts](docs/evidence/) include real AD lockout/unlock tasks.
+## Start here (2 minutes)
 
-![Service desk copilot dashboard](docs/img/grafana-dashboard.png)
-
-## What it demonstrates
-
-| Area | In this repo |
+| If you want to see… | Open |
 |---|---|
-| Service desk practice | P1–P4 priorities and SLA targets, escalation rules, approval queue, SLA breach monitor, end-of-day digest (`kb/service-desk-policy.md`) |
-| Knowledge management | 8 user-facing KB articles (VPN, file shares, printing, MFA, Wi-Fi, email, onboarding/offboarding) |
-| Automation (n8n) | 6 workflows: gateway sub-workflow, ticket intake, approval link, SLA monitor, scheduled and on-demand digests |
-| RAG with hybrid search | pgvector (768-d `nomic-embed-text`) + Postgres full-text search merged with Reciprocal Rank Fusion in SQL (`db/init.sql`) |
-| LLM gateway | per-task model routing, retries, fallback chain, per-model rate limit, daily cloud budget ("cost autopilot"), circuit breaker, per-attempt telemetry |
-| Output arbitration | two drafts from different models, blind judge, plus deterministic checks (citations must match retrieved sections, both drafts must cite the same article) |
-| Risk controls | PII detection and redaction before any model sees the text, security and access requests always go to a human |
-| Observability | Grafana dashboard provisioned as code: outcomes, fallback rate, latency by model, gateway events, approval queue |
-| Testing | `tests/run_demo.py` is a smoke test: 6 realistic tickets, each checked against its expected queue (6/6 in `docs/demo-run.txt`). It is not a full evaluation |
+| How I troubleshoot a ticket | [VPN connects but shares won't open](docs/cases/01-vpn-shares.md), [new Finance starter gets "Access denied"](docs/cases/02-finance-starter.md), [whole office can't print](docs/cases/03-office-printing.md) |
+| How I'd hand the environment to another engineer | [Runbook](docs/homelab-runbook.md): onboarding, offboarding, lost device, restore a file, clear a stuck queue, monitoring, backups |
+| What end users are told | [User guides](docs/user-guides/): VPN, file shares, printing, password and MFA, Wi-Fi, email, onboarding |
+| Proof it works | [Test results](docs/homelab-results.md) and redacted [transcripts](docs/evidence/) |
 
-## Architecture
+## The labs
+
+| Lab | Built with | What I configured and tested |
+|---|---|---|
+| **VPN lab** | WireGuard (wg-easy) | Create, list and revoke per-device peers through the admin API; split-tunnel routes to the office LAN (172.20.0.0/16); a real WireGuard client container connects and reaches the file server through the tunnel |
+| **File server & storage** | Samba | Public, Finance and Scans shares with group-based permissions: Finance staff can write to Finance, other staff are denied, everyone can use Public; Scans receives print-to-PDF output |
+| **Print server** | CUPS | Two queues (Office-PDF prints real PDFs into Scans, Office-Laser simulates a network laser), public queue views, password-protected admin, test pages verified to complete |
+| **Directory** | Samba 4 AD DC, domain `ITOPS.LAB` | OUs, users and groups; create user, reset password with change at next logon, account lockout after bad passwords and unlock, add to a group, disable a leaver |
+| **Monitoring** | Uptime Kuma | Service availability dashboard; the monitors to add are listed in the runbook |
 
 ```mermaid
 flowchart LR
-  U[Staff member / form / email bridge] -->|POST /webhook/ticket| I
-  subgraph n8n
-    I[Normalise + PII redaction] --> C[Classify: category, P1-P4]
-    C --> R[Hybrid search: vector + keyword, RRF]
-    R --> D[Draft A and Draft B]
-    D --> J[Blind judge]
-    J --> G{Policy gate}
-    GW[[LLM Gateway sub-workflow:<br/>routing, retries, fallback,<br/>rate limit, budget, circuit breaker]]
-  end
-  C & D & J -.-> GW
-  GW -.-> O[(Ollama: qwen2.5:3b, llama3.1:8b<br/>cloud tier optional)]
-  G -->|low-risk, grounded, confident P3/P4| A[Auto-resolved]
-  G -->|access, PII, P2, low confidence| Q[Approval queue]
-  G -->|P1 or security| E[Escalated]
-  Q -->|GET /webhook/approve| H[Technician approves or rejects]
-  PG[(Postgres + pgvector:<br/>tickets, kb_chunks, llm_calls)] --- n8n
-  PG --> GF[Grafana dashboard]
+  U[Staff laptop<br/>WireGuard app] -->|VPN 10.8.0.0/24| W[wg-easy]
+  W -->|office LAN 172.20.0.0/16| S[Samba file server<br/>Public / Finance / Scans]
+  W --> P[CUPS print server<br/>Office-PDF / Office-Laser]
+  P -->|PDF output| S
+  D[Samba AD DC<br/>ITOPS.LAB] -.->|accounts, groups, lockout| A[Service desk tasks]
+  K[Uptime Kuma] --> S & P & W & D
 ```
 
-### Why the gate is rule-based
+## Worked support cases
 
-Models are good at drafting and bad at knowing when they are wrong. In the first test run the judge rated a reply as fully
-supported even though it told a user with a VPN problem to "raise a P1 ticket" (advice from the lost-device section). So the
-final decision is made by code that mirrors the written policy, not by a model:
+Each fault was injected for real, diagnosed with real commands and fixed. The case write-ups are generated from the
+captured output (`tests/reproduce_cases.py`):
 
-- P1 and security tickets are escalated, P2 always needs a person.
-- Any access or permission change needs approval. A regex backstop catches these even when the model labels them as something else (this was a real miss in testing).
-- Tickets with personal or sensitive data are redacted and held.
-- A reply is sent automatically (status `auto_resolved` means "reply sent", not "fixed") only if the judge says it is grounded, confidence is at least 0.8, it cites a section that was actually retrieved, and both independent drafts relied on the same article.
-
-### Gateway behaviour you can see in the dashboard
-
-With `CLOUD_TIER=on` (as in the screenshot), the judge's first choice is a cloud model. On a free plan it returns HTTP 402, so the gateway records the failure and falls back
-to `llama3.1:8b`. After three failures in ten minutes the circuit opens and the cloud model is skipped without a network call.
-Once the daily cloud budget is spent it is skipped too. Local models cost $0, and cloud prices in `model_prices` are illustrative.
+1. **VPN connects but shares won't open.** The tunnel was up, but the saved profile was missing the office route. Proved it with `ip route get` and an `smbclient` failure, then corrected AllowedIPs and verified the route through `wg0`.
+2. **New Finance starter: "Access denied".** Public worked but Finance was denied. Compared the user's groups with the share's permissions, added them to the finance group after (simulated) manager approval without widening the share, and confirmed write, read-back and delete.
+3. **Whole office can't print.** Both queues were left paused after maintenance. Found it with `lpstat`, re-enabled the queues and accepted jobs, and confirmed the original stuck job completed.
 
 ## Run it
 
-Prerequisites: Docker Desktop, [Ollama](https://ollama.com) with `nomic-embed-text`, `qwen2.5:3b` and `llama3.1:8b` pulled, Python 3.10+.
+Requires Docker Desktop and Windows PowerShell 5.1 (Python 3 for the case reproductions).
 
-```bash
-cp .env.example .env            # fill in passwords
-docker compose up -d            # postgres :55432, n8n :5678, grafana :13000
-python scripts/ingest_kb.py     # chunk, embed and load the KB
-python scripts/build_workflows.py
-docker compose exec n8n n8n import:workflow --separate --input=/import/workflows
-# publish the workflows in the n8n UI (or n8n publish:workflow --id=...), then:
-python tests/run_demo.py
+```powershell
+copy .env.example .env
+powershell -NoProfile -File homelab/bootstrap.ps1     # generates all lab passwords privately
+docker compose up -d --build
+powershell -NoProfile -File tests/homelab_check.ps1   # shares, permissions, printing, VPN peers, monitoring
+powershell -NoProfile -File tests/ad_tasks.ps1        # directory service desk tasks
+docker build -t it-support-homelab-vpn-client:14 homelab/vpn
+python tests/reproduce_cases.py                       # breaks and fixes the three faults, then cleans up
 ```
 
-Try a ticket yourself:
+Latest run (6 October 2026): homelab checks **0 failures**, AD tasks **0 failures**, all three cases reproduced, fixed and cleaned up.
 
-```bash
-curl -X POST localhost:5678/webhook/ticket -H "Content-Type: application/json" \
-  -d '{"name":"Sam","subject":"Printer offline","body":"My print job is stuck and the printer says offline"}'
-```
+## Honest limits
 
-Approve a held reply: `GET http://localhost:5678/webhook/approve?id=<ticket>&action=approve&by=<name>&token=<APPROVAL_TOKEN>`.
-Requests without the token are rejected. The shared token stands in for SSO in this lab, and the approver name is self-reported, so a real deployment would take identity from SSO and keep an audit log.
-Dashboard: http://localhost:13000 (anonymous read-only view is enabled).
+- The directory is **Samba AD**, not Windows Server: no RSAT, Group Policy or Windows domain join is demonstrated, and the file server's accounts are separate from AD.
+- Office-Laser is a simulated printer. Office-PDF produces real PDFs.
+- The VPN is tested with a real WireGuard client inside Docker. There's no public endpoint, MFA or production deployment.
+- Backups and shadow copies are documented in the runbook as procedures, not scheduled jobs.
 
-## Homelab profile
+## Related project
 
-`docker compose --profile homelab up -d` adds the small-office services the knowledge base talks about: a WireGuard VPN
-(wg-easy), a Samba file server with Public, Finance and Scans shares and per-user access, a CUPS print server
-(Office-Laser, Office-PDF) and Uptime Kuma monitoring. See `docs/homelab-runbook.md`.
+[IT Ops Lab](https://github.com/iamnajib71/it-ops-lab) is an AI service-desk copilot (n8n, hybrid RAG, rule-based approval gate)
+that answers tickets about this same office using the same user guides.
 
-## Layout
-
-```
-db/init.sql                 schema, hybrid search function, KPI view
-kb/                         knowledge base articles (the copilot's only source of truth)
-scripts/ingest_kb.py        chunk + embed + load KB (standard library only)
-scripts/build_workflows.py  generates workflows/*.json (prompts, routing policy and SQL in one place)
-workflows/                  n8n workflow exports
-grafana/                    datasource and dashboard provisioning
-tests/run_demo.py           scenario test: 6 tickets, expected routing
-```
-
-## Known limits and next steps
-
-- With only two local models, the judge shares a model family with one of the drafters. A third model family (or the cloud tier) would make arbitration more independent.
-- Agreement between two drafts and a 0.8 confidence threshold are cheap signals, not proof. Confidence is not yet calibrated against a labelled set.
-- SLA targets are simplified to clock hours, so business hours and public holidays are not modelled.
-- Next: email intake (IMAP or Microsoft Graph), Teams alerts for SLA breaches, and evaluation on a larger labelled ticket set.
-
-Built by Nazmul Hassan: [LinkedIn](https://www.linkedin.com/in/iamnajib71)
+Built by Nazmul Hassan: [LinkedIn](https://www.linkedin.com/in/iamnajib71) · [GitHub](https://github.com/iamnajib71)

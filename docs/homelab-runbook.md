@@ -3,13 +3,13 @@
 **Lab simulation; verified 6 October 2026.** Work from the project root:
 
 ```powershell
-# First setup: copy .env.example to .env; configure core and SMB values privately.
+# First setup: copy .env.example to .env; bootstrap generates every lab credential privately.
 powershell -NoProfile -File homelab/bootstrap.ps1
-docker compose --profile homelab up -d
+docker compose up -d --build
 powershell -NoProfile -File tests/homelab_check.ps1
 powershell -NoProfile -File tests/ad_tasks.ps1
 # Optional: reproduce the three faults without host packages.
-docker build -t it-ops-lab-vpn-client:14 homelab/vpn
+docker build -t it-support-homelab-vpn-client:14 homelab/vpn
 python tests/reproduce_cases.py
 ```
 
@@ -26,12 +26,11 @@ flowchart LR
   A --> K[Uptime Kuma]
   A -->|LDAP 1389 / LDAPS 1636| D[AD DC: ITOPS.LAB]
   V[WireGuard app / isolated lab client] -->|UDP 51820| W
-  W -->|VPN 10.8.0.0/24 to office 172.18.0.0/16| S
+  W -->|VPN 10.8.0.0/24 to office LAN 172.20.0.0/16| S
   W --> P
   P -->|PDF output| SC[(Scans/pdf)]
   S --- SC
   S --- F[(Public / Finance)]
-  K --> N[n8n / Grafana / Postgres]
   K --> S
   K --> P
   K --> W
@@ -46,8 +45,8 @@ flowchart LR
 | Uptime Kuma / availability | TCP 13001 → 3001 | http://127.0.0.1:13001; create a local admin on first setup |
 | Samba 4 AD / directory | TCP 1389 → 389; 1636 → 636 | `docker compose exec directory samba-tool`; Administrator / `AD_ADMIN_PASSWORD` |
 
-All new host ports bind **127.0.0.1**. No internet forwarding or firewall changes;
-existing copilot bindings are unchanged. CUPS permits private LAN/Docker ranges
+All new host ports bind **127.0.0.1**. No internet forwarding or firewall changes.
+CUPS permits private LAN/Docker ranges
 inside the container; /admin requires print (trusted root CLI is also allowed).
 
 Office-PDF uses **real cups-pdf**, saving into **Scans/pdf**; startup falls back to
@@ -59,8 +58,8 @@ For a real printer set its URI and `-m everywhere`. PDF is default.
 Use `\\fileserver\Public`, Finance and Scans from lab clients. Windows Explorer
 cannot specify SMB port 1445; host checks run smbclient in Docker. VPN clients need
 the intranet server IP or configured DNS; Docker service names are not client DNS.
-Confirm the office subnet with `docker network inspect it-ops-lab_default`.
-If recreated networks change it, update Compose WG_ALLOWED_IPS and reissue profiles.
+The office LAN subnet is pinned to 172.20.0.0/16 (network `office-lan`) in docker-compose.yml,
+so VPN profiles stay valid when containers are recreated. If you change it, update WG_ALLOWED_IPS and reissue profiles.
 This lab has no external VPN endpoint; evidence uses a real isolated Docker peer.
 
 ## Starter, leaver, lost device
@@ -123,9 +122,7 @@ three retries; save and confirm UP. Configure notifications only to an approved 
 
 | Required host monitor | Target from inside Kuma |
 |---|---|
-| n8n :5678 | HTTP http://n8n:5678/healthz |
-| Grafana :13000 | HTTP http://grafana:3000/api/health |
-| Postgres :55432 | TCP postgres:5432 |
+| AD DC :1389 | TCP directory:389 |
 | Samba :1445 | TCP fileserver:445 |
 | CUPS :6631 | HTTP http://printserver:631/printers |
 | wg-easy :51821 | HTTP http://wireguard:51821 |

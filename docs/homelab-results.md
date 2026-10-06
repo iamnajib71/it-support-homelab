@@ -1,16 +1,26 @@
-# Homelab completion results — 6 October 2026
+# Test results: 6 October 2026
 
-All eight deliverables in CODEX_TASK_homelab.md completed. Docker Compose homelab startup succeeds; all five homelab containers run (AD, VPN, Samba and Kuma report healthy). Original copilot files and core service definitions are unchanged. README changes are limited to hiring-manager evidence links.
+Run on Windows 11 with Docker Desktop and Windows PowerShell 5.1, from a clean start of this repository's own Compose project
+(`it-support-homelab`, office LAN 172.20.0.0/16).
 
-- Windows PowerShell **5.1.26100.9549**: [homelab check](evidence/homelab-check-20261006-153329-772.txt), **0 failed checks**. Four containers running; share listing, Alice Finance write/readback, Bob denied, both Public write/readback; both queues/default; PDF generated in Scans and IPP completed state 9; CUPS public views and authenticated admin; VPN session/peer creation, listing and deletion; Kuma HTTP 200.
-- [AD tasks](evidence/ad-tasks-20261006-153335-176.txt), **0 failed checks**: healthy controller, SYSVOL ACLs, OUs/users/groups, create, reset/force-change, five real bad LDAP binds, lockout, unlock/authenticate, Finance membership, disable/deny leaver, list members and cleanup.
-- [Support cases](evidence/support-cases-20261006-152953.txt): all three real faults reproduced, repaired and verified; temporary peer/client/network/starter removed; queues restored. Documents: [VPN](cases/01-vpn-shares.md), [Finance](cases/02-finance-starter.md), [printing](cases/03-office-printing.md).
-- CUPS setup, AD seed and credential bootstrap rerun idempotently. PowerShell 5.1 parser validation passed. Actual credentials absent from evidence/source and existing Git history; .env stays ignored. Protected-file hashes verified against the initial baseline.
+| Check | Result | Transcript |
+|---|---|---|
+| Homelab: all five containers running; share listing; Alice writes and reads back on Finance; Bob denied on Finance; both use Public; both print queues and default; PDF printed into Scans and IPP job completed (state 9); CUPS public views and admin login required; VPN peer create, list and delete; Uptime Kuma responds | **0 failed checks** | [homelab-check](evidence/homelab-check-20261006-155507-155.txt) |
+| Directory (ITOPS.LAB): controller healthy, SYSVOL ACLs, OUs/users/groups; create user; reset password with change at next logon; lockout after bad passwords and unlock; add to Finance group; disable a leaver and confirm sign-in is denied; list members; clean up | **0 failed checks** | [ad-tasks](evidence/ad-tasks-20261006-155516-705.txt) |
+| Support cases: VPN route, Finance access, paused print queues, each reproduced, fixed, verified and cleaned up | **3 of 3** | [support-cases](evidence/support-cases-20261006-155525.txt) |
 
-Implemented CUPS LAN/Docker access controls, cups-pdf, generic simulated Office-Laser, group-based Finance permissions, localhost port bindings, corrected VPN subnet, private bcrypt credentials, persistent Samba AD with container-compatible xattr TDB ACLs, repeatable checks, onboarding/offboarding/restore/print/monitor/backup runbook and a clean-clone credential bootstrap.
+Secrets live only in the ignored `.env` and are redacted from every transcript; the published files were scanned for them before each commit.
 
-Resolved during verification: registry TLS timeouts (retried); empty WireGuard hash caused by CRLF parsing (fixed and verified login); AD security.NTACL access denied (replaced with supported persistent xattr TDB backend, SYSVOL check passes); Samba lacks LDAP Who Am I extension (authenticate via successful LDAP search after unlock). Initial failed transcripts are retained as redacted troubleshooting history.
+## Problems solved while building it
 
-Boundaries: Office-Laser is deliberately a placeholder; no physical device test. AD is Samba, separate from the standalone share server; no Windows domain join/RSAT or MFA claimed. VPN is tested through a real internal Docker client, with no public endpoint. Nightly shadow copies and retention are documented operating targets, not implemented host schedules. Uptime monitor targets are listed for setup; no external notification channel configured. No unresolved required-check failures.
+- WireGuard admin login failed because the password hash was read with Windows line endings (CRLF). Fixed the parsing and verified the login.
+- Samba AD could not store Windows ACLs inside a container (`security.NTACL` access denied). Switched to the supported xattr TDB backend; the SYSVOL ACL check now passes.
+- Samba's LDAP server lacks the "Who am I" extension, so sign-in after unlock is verified with an authenticated LDAP search instead.
+- The VPN routing case depends on the office subnet, so the subnet is pinned in Compose and profiles stay valid when containers are recreated.
 
-Repository requested by the user: https://github.com/iamnajib71/it-support-homelab
+## Boundaries
+
+Office-Laser is a placeholder device and no physical printer is tested. The directory is Samba AD, separate from the standalone
+file server, so no Windows domain join, RSAT, Group Policy or MFA is claimed. The VPN has no public endpoint. Shadow copies and
+retention are documented targets, not scheduled jobs. Uptime Kuma monitors are listed in the runbook, with no external
+notifications configured.

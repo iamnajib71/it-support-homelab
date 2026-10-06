@@ -13,15 +13,15 @@ Captured commands/results (credentials redacted):
 ```text
 > Fault injection: stop both office queues
 > lpstat -p -d (office-wide failure)
-printer Office-Laser disabled since Tue Oct  6 04:30:03 2026 -
+printer Office-Laser disabled since Tue Oct  6 04:55:35 2026 -
 	LAB SIMULATION: paused by maintenance
-printer Office-PDF disabled since Tue Oct  6 04:30:03 2026 -
+printer Office-PDF disabled since Tue Oct  6 04:55:35 2026 -
 	LAB SIMULATION: paused by maintenance
 system default destination: Office-PDF
 > Submit test page while Office-PDF is stopped
-request id is Office-PDF-3 (0 file(s))
+request id is Office-PDF-2 (0 file(s))
 > lpstat: job remains queued
-Office-PDF-3            root              1024   Tue Oct  6 04:30:04 2026
+Office-PDF-2            root              1024   Tue Oct  6 04:55:36 2026
 PASS reproduced: both queues disabled; submitted PDF remains pending
 > Fix: enable both queues
 > Fix: accept new jobs
@@ -29,8 +29,8 @@ PASS reproduced: both queues disabled; submitted PDF remains pending
 "/lab-job-completed.test":
     Job completed, not cancelled or aborted                              [PASS]
 > lpstat -p -d after recovery
-printer Office-Laser is idle.  enabled since Tue Oct  6 04:30:04 2026
-printer Office-PDF is idle.  enabled since Tue Oct  6 04:30:05 2026
+printer Office-Laser is idle.  enabled since Tue Oct  6 04:55:36 2026
+printer Office-PDF is idle.  enabled since Tue Oct  6 04:55:37 2026
 system default destination: Office-PDF
 PASS original queued job completed (IPP job-state=9); both queues enabled
 ```
@@ -45,4 +45,4 @@ PASS original queued job completed (IPP job-state=9); both queues enabled
 
 **Prevent recurrence:** Add queue state and end-to-end print tests to the maintenance checklist. Monitor availability plus scheduler/job failures; record who paused a queue and when to re-enable it.
 
-Full reproduction: [redacted transcript](../evidence/support-cases-20261006-152953.txt); rerun python tests/reproduce_cases.py.
+Full reproduction: [redacted transcript](../evidence/support-cases-20261006-155525.txt); rerun python tests/reproduce_cases.py.
