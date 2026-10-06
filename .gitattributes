@@ -1,0 +1,9 @@
+# Keep Linux container scripts/configs portable on Windows clones.
+homelab/** text eol=lf
+tests/ad_tasks.ps1 text eol=lf
+tests/homelab_check.ps1 text eol=lf
+tests/lab_helpers.ps1 text eol=lf
+tests/reproduce_cases.py text eol=lf
+docs/cases/** text eol=lf
+docs/evidence/** text eol=lf
+docs/homelab-*.md text eol=lf

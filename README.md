@@ -14,6 +14,10 @@ cloud tier is switched on, only the redacted ticket text and the retrieved KB ex
 (two real failures I caught in testing and how I fixed them), the KB articles in `kb/`, and the SLA and escalation policy in
 `kb/service-desk-policy.md`.
 
+Homelab evidence: [runbook](docs/homelab-runbook.md), [VPN connects but shares fail](docs/cases/01-vpn-shares.md),
+[Finance starter access denied](docs/cases/02-finance-starter.md), and [office-wide printing failure](docs/cases/03-office-printing.md).
+All three are worked lab simulations with captured diagnostics; [verification transcripts](docs/evidence/) include real AD lockout/unlock tasks.
+
 ![Service desk copilot dashboard](docs/img/grafana-dashboard.png)
 
 ## What it demonstrates

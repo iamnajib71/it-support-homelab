@@ -1,0 +1,59 @@
+Lab simulation; 2026-10-06 15:25:07 Australia/Sydney
+PowerShell 5.1.26100.9549
+> compose ps directory
+e4cfa90181dd595fc3b1aaf7229faa87ae27cf47b182cc967176438bfa2735e6
+> directory health
+healthy
+> samba-tool ou list
+OU=IT
+OU=Staff
+OU=Finance
+OU=Domain Controllers
+> samba-tool user list
+carol
+krbtgt
+bob
+Administrator
+alice
+Guest
+> samba-tool group listmembers GG-Staff
+alice
+bob
+carol
+> samba-tool group listmembers GG-Finance
+alice
+> samba-tool group listmembers GG-IT-Admins
+carol
+PASS AD directory healthy and seeded
+> samba-tool service desk tasks and real LDAP lockout
+Password information for domain 'DC=itops,DC=lab'
+
+Password complexity: on
+Store plaintext passwords: off
+Password history length: 12
+Minimum password length: 12
+Minimum password age (days): 0
+Maximum password age (days): 90
+Account lockout duration (mins): 15
+Account lockout threshold (attempts): 5
+Reset account lockout after (mins): 15
+User 'sdtest_1791260711_183' added successfully
+PASS create user in Staff
+Changed password OK
+PASS reset password and force change at next logon
+Changed password OK
+Bad bind 1: ldap_bind: Invalid credentials (49)
+Bad bind 2: ldap_bind: Invalid credentials (49)
+Bad bind 3: ldap_bind: Invalid credentials (49)
+Bad bind 4: ldap_bind: Invalid credentials (49)
+Bad bind 5: ldap_bind: Invalid credentials (49)
+PASS five bad binds set lockoutTime
+PASS locked account denies correct password
+Result: Protocol error (2)
+Additional info: Extended Operation(1.3.6.1.4.1.4203.1.11.3) not supported
+ldap_parse_result: Protocol error (2)
+	additional info: Extended Operation(1.3.6.1.4.1.4203.1.11.3) not supported
+FAIL unlock account and authenticate
+FAIL AD create/reset/force-change/lock/unlock/group/disable: samba-tool service desk tasks and real LDAP lockout exited 1
+RESULT: 1 failed checks
+Evidence: H:\My Projects - IT\it-ops-lab\docs\evidence\ad-tasks-20261006-152507-547.txt

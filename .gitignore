@@ -2,3 +2,8 @@
 __pycache__/
 *.log
 evidence/raw/
+
+# Homelab backups and private peer exports
+homelab/backups/
+homelab/private/
+*.key

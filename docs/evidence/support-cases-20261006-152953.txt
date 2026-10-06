@@ -1,0 +1,81 @@
+LAB SIMULATION — three reversible faults, 20261006-152953 Australia/Sydney
+> VPN client: ping 10.8.0.1
+PING 10.8.0.1 (10.8.0.1): 56 data bytes
+64 bytes from 10.8.0.1: seq=0 ttl=64 time=2.040 ms
+
+--- 10.8.0.1 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 2.040/2.040/2.040 ms
+> wg show wg0 latest-handshakes (keys omitted)
+Latest handshake epoch: 1791260995
+Stale profile AllowedIPs = 10.8.0.0/24 (office subnet omitted)
+> ip route get 172.18.0.7 (stale profile)
+RTNETLINK answers: Network unreachable
+> smbclient Public via stale VPN profile
+do_connect: Connection to 172.18.0.7 failed (Error NT_STATUS_NETWORK_UNREACHABLE)
+PASS reproduced: handshake exists, Public inaccessible
+Corrected AllowedIPs = 10.8.0.0/24, 172.18.0.0/16
+> ip route get 172.18.0.7 (corrected profile)
+172.18.0.7 dev wg0 src 10.8.0.2 uid 0
+    cache
+> smbclient Public through WireGuard after corrected import
+.                                   D        0  Tue Oct  6 04:25:04 2026
+  ..                                  D        0  Tue Oct  6 04:27:11 2026
+  .deleted                           DH        0  Tue Oct  6 04:25:04 2026
+
+		1055762868 blocks of size 1024. 992704596 blocks available
+PASS VPN routing restored; authenticated share listing succeeds
+PASS temporary VPN peer revoked and isolated client/network removed
+> Create approved lab Finance starter fin4ee32528 (password omitted)
+Added user fin4ee32528.
+> Starter can authenticate and list Public
+.                                   D        0  Tue Oct  6 04:25:04 2026
+  ..                                  D        0  Tue Oct  6 04:27:11 2026
+  .deleted                           DH        0  Tue Oct  6 04:25:04 2026
+
+		1055762868 blocks of size 1024. 992704696 blocks available
+> Starter Finance access before group assignment
+tree connect failed: NT_STATUS_ACCESS_DENIED
+> id starter; effective Finance share ACL
+uid=1000(fin4ee32528) gid=1101(staff) groups=1101(staff),1101(staff)
+[Finance]
+	comment = Finance team only
+	delete veto files = Yes
+	path = /shares/finance
+	read only = No
+	valid users = @finance
+	veto files = /.apdisk/.DS_Store/.TemporaryItems/.Trashes/desktop.ini/ehthumbs.db/Network Trash Folder/Temporary Items/Thumbs.db/
+
+
+[Scans]
+> Manager-approved fix: add starter to finance; refresh identity cache
+uid=1000(fin4ee32528) gid=1101(staff) groups=1101(staff),1100(finance),1101(staff)
+> Starter Finance write/read/delete succeeds after group membership
+putting file /tmp/fin4ee32528.txt as \fin4ee32528.txt (20.5 kb/s) (average 20.5 kb/s)
+getting file \fin4ee32528.txt of size 21 as /tmp/fin4ee32528-download.txt (20.5 KiloBytes/sec) (average 20.5 KiloBytes/sec)
+PASS Finance starter fault reproduced and repaired
+> Remove temporary starter account
+Deleted user fin4ee32528.
+> Fault injection: stop both office queues
+> lpstat -p -d (office-wide failure)
+printer Office-Laser disabled since Tue Oct  6 04:30:03 2026 -
+	LAB SIMULATION: paused by maintenance
+printer Office-PDF disabled since Tue Oct  6 04:30:03 2026 -
+	LAB SIMULATION: paused by maintenance
+system default destination: Office-PDF
+> Submit test page while Office-PDF is stopped
+request id is Office-PDF-3 (0 file(s))
+> lpstat: job remains queued
+Office-PDF-3            root              1024   Tue Oct  6 04:30:04 2026
+PASS reproduced: both queues disabled; submitted PDF remains pending
+> Fix: enable both queues
+> Fix: accept new jobs
+> ipptool: original stuck job
+"/lab-job-completed.test":
+    Job completed, not cancelled or aborted                              [PASS]
+> lpstat -p -d after recovery
+printer Office-Laser is idle.  enabled since Tue Oct  6 04:30:04 2026
+printer Office-PDF is idle.  enabled since Tue Oct  6 04:30:05 2026
+system default destination: Office-PDF
+PASS original queued job completed (IPP job-state=9); both queues enabled
+RESULT: all three faults reproduced, repaired, verified and cleaned up
