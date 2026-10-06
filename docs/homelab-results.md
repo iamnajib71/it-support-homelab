@@ -5,7 +5,7 @@ Run on Windows 11 with Docker Desktop and Windows PowerShell 5.1, from a clean s
 
 | Check | Result | Transcript |
 |---|---|---|
-| Homelab: all five containers running; share listing; Alice writes and reads back on Finance; Bob denied on Finance; both use Public; both print queues and default; PDF printed into Scans and IPP job completed (state 9); CUPS public views and admin login required; VPN peer create, list and delete; Uptime Kuma responds | **0 failed checks** | [homelab-check](evidence/homelab-check-20261006-155507-155.txt) |
+| Homelab: all six containers running; share listing; Alice writes and reads back on Finance; Bob denied on Finance; both use Public; both print queues and default; PDF printed into Scans and IPP job completed (state 9); CUPS public views and admin login required; VPN peer create, list and delete; Uptime Kuma responds and all 6 status-page monitors are UP; office dashboard responds | **0 failed checks** | [homelab-check](evidence/homelab-check-20261006-211239-566.txt) |
 | Directory (ITOPS.LAB): controller healthy, SYSVOL ACLs, OUs/users/groups; create user; reset password with change at next logon; lockout after bad passwords and unlock; add to Finance group; disable a leaver and confirm sign-in is denied; list members; clean up | **0 failed checks** | [ad-tasks](evidence/ad-tasks-20261006-155516-705.txt) |
 | Support cases: VPN route, Finance access, paused print queues, each reproduced, fixed, verified and cleaned up | **3 of 3** | [support-cases](evidence/support-cases-20261006-155525.txt) |
 
@@ -22,5 +22,4 @@ Secrets live only in the ignored `.env` and are redacted from every transcript; 
 
 Office-Laser is a placeholder device and no physical printer is tested. The directory is Samba AD, separate from the standalone
 file server, so no Windows domain join, RSAT, Group Policy or MFA is claimed. The VPN has no public endpoint. Shadow copies and
-retention are documented targets, not scheduled jobs. Uptime Kuma monitors are listed in the runbook, with no external
-notifications configured.
+retention are documented targets, not scheduled jobs. Uptime Kuma has no external notification channel configured.

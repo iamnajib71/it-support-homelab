@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 Push-Location $script:LabRoot
 try {
     Start-LabEvidence 'homelab-check'
-    foreach ($service in @('wireguard', 'fileserver', 'printserver', 'uptime')) {
+    foreach ($service in @('wireguard', 'fileserver', 'printserver', 'uptime', 'homepage')) {
         Test-LabStep "$service container running" {
             $id = Invoke-CheckedDocker "compose ps $service" @('compose','ps','-q',$service)
             Assert-Lab (-not [string]::IsNullOrWhiteSpace($id)) 'Container missing'
@@ -61,6 +61,21 @@ try {
         $response = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:13001' -TimeoutSec 15
         Assert-Lab ($response.StatusCode -eq 200) 'Uptime Kuma failed'
         Write-Evidence 'GET http://127.0.0.1:13001 => HTTP 200'
+    }
+    Test-LabStep 'Uptime Kuma status page: every office monitor UP' {
+        $beats = (Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:13001/api/status-page/heartbeat/office' -TimeoutSec 15).Content | ConvertFrom-Json
+        $ids = @($beats.heartbeatList.PSObject.Properties.Name)
+        Assert-Lab ($ids.Count -ge 6) "Expected at least 6 monitors, found $($ids.Count); run homelab/uptime/setup-kuma.js"
+        foreach ($id in $ids) {
+            $last = @($beats.heartbeatList.$id)[-1]
+            Assert-Lab ($last.status -eq 1) "Monitor $id is not UP: $($last.msg)"
+        }
+        Write-Evidence ("GET /api/status-page/heartbeat/office => " + $ids.Count + ' monitors, all UP')
+    }
+    Test-LabStep 'Office dashboard (Homepage) responds' {
+        $response = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:13002' -TimeoutSec 20
+        Assert-Lab ($response.StatusCode -eq 200) 'Dashboard failed'
+        Write-Evidence 'GET http://127.0.0.1:13002 => HTTP 200'
     }
     Write-Evidence ("RESULT: " + $script:Failures + ' failed checks')
     Write-Evidence ("Evidence: " + $script:EvidencePath)

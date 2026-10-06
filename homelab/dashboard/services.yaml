@@ -1,0 +1,34 @@
+- Office network:
+    - VPN (WireGuard):
+        icon: wireguard.png
+        href: http://127.0.0.1:51821
+        description: Remote access for staff laptops, one profile per device
+        siteMonitor: http://wireguard:51821
+        widget:
+          type: wgeasy
+          url: http://wireguard:51821
+          password: "{{HOMEPAGE_VAR_WG_PASSWORD}}"
+    - File server (Samba):
+        icon: mdi-folder-network
+        description: Public, Finance and Scans shares, group-based access
+        ping: fileserver
+    - Print server (CUPS):
+        icon: mdi-printer
+        href: http://127.0.0.1:6631/printers/
+        description: Office-PDF (prints to Scans) and Office-Laser queues
+        siteMonitor: http://printserver:631/printers/
+
+- Directory and monitoring:
+    - Active Directory (ITOPS.LAB):
+        icon: mdi-account-group
+        description: Users, groups, password resets, lockouts and leavers
+        ping: directory
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: http://127.0.0.1:13001/status/office
+        description: Availability history and public status page
+        siteMonitor: http://uptime:3001
+        widget:
+          type: uptimekuma
+          url: http://uptime:3001
+          slug: office

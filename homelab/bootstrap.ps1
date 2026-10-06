@@ -15,7 +15,7 @@ function New-LabPassword {
     try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
     return ('Aa1!' + [BitConverter]::ToString($bytes).Replace('-', '').ToLowerInvariant())
 }
-foreach ($key in @('SMB_ALICE_PASSWORD','SMB_BOB_PASSWORD','WG_ADMIN_PASSWORD','AD_ADMIN_PASSWORD','AD_ALICE_PASSWORD','AD_BOB_PASSWORD','AD_CAROL_PASSWORD','CUPS_ADMIN_PASSWORD')) {
+foreach ($key in @('SMB_ALICE_PASSWORD','SMB_BOB_PASSWORD','WG_ADMIN_PASSWORD','AD_ADMIN_PASSWORD','AD_ALICE_PASSWORD','AD_BOB_PASSWORD','AD_CAROL_PASSWORD','CUPS_ADMIN_PASSWORD','KUMA_ADMIN_PASSWORD')) {
     if (-not $values[$key]) {
         $values[$key] = New-LabPassword
         if ($text -match ("(?m)^" + $key + '=')) {

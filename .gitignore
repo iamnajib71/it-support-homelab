@@ -7,3 +7,10 @@ evidence/raw/
 homelab/backups/
 homelab/private/
 *.key
+
+# Homepage writes these at runtime
+homelab/dashboard/logs/
+homelab/dashboard/custom.css
+homelab/dashboard/custom.js
+homelab/dashboard/kubernetes.yaml
+homelab/dashboard/proxmox.yaml
