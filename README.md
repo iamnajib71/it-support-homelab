@@ -2,11 +2,14 @@
 
 A small-office IT environment I built and support end to end, running in Docker on one Windows PC. It has three labs that
 work together the way a real office does (staff connect over the **VPN**, open the **file shares**, and print to the **print
-server** that drops PDFs into the Scans share), plus a **directory server** for account administration and **monitoring**.
+server** that drops PDFs into the Scans share), plus a **directory server** for account administration, **monitoring**, and an
+**office dashboard** that shows the whole office on one page.
 
 Every service is tested by scripts, and I broke and fixed three realistic faults on purpose, documented as service desk tickets.
 
 > **Lab, not production.** All ports bind to 127.0.0.1, users are fictional, and the limits are listed at the bottom.
+
+![Office dashboard: live status of the VPN, file server, print server, directory and monitoring](docs/img/dashboard.png)
 
 ## Start here (2 minutes)
 
@@ -25,7 +28,8 @@ Every service is tested by scripts, and I broke and fixed three realistic faults
 | **File server & storage** | Samba | Public, Finance and Scans shares with group-based permissions: Finance staff can write to Finance, other staff are denied, everyone can use Public; Scans receives print-to-PDF output |
 | **Print server** | CUPS | Two queues (Office-PDF prints real PDFs into Scans, Office-Laser simulates a network laser), public queue views, password-protected admin, test pages verified to complete |
 | **Directory** | Samba 4 AD DC, domain `ITOPS.LAB` | OUs, users and groups; create user, reset password with change at next logon, account lockout after bad passwords and unlock, add to a group, disable a leaver |
-| **Monitoring** | Uptime Kuma | Service availability dashboard; the monitors to add are listed in the runbook |
+| **Monitoring** | Uptime Kuma | Six monitors (VPN admin, SMB 445, CUPS, LDAP 389, Kerberos 88, dashboard) and a status page, created by a setup script |
+| **Office dashboard** | Homepage | One page with live up/down status, VPN device count, uptime summary and links to every admin console and runbook |
 
 ```mermaid
 flowchart LR
@@ -36,6 +40,17 @@ flowchart LR
   D[Samba AD DC<br/>ITOPS.LAB] -.->|accounts, groups, lockout| A[Service desk tasks]
   K[Uptime Kuma] --> S & P & W & D
 ```
+
+## Dashboards
+
+| Page | Local URL | What it shows |
+|---|---|---|
+| Office dashboard | http://127.0.0.1:13002 | Every service at a glance (screenshot above) |
+| Status page | http://127.0.0.1:13001/status/office | Uptime history for each service |
+| VPN admin | http://127.0.0.1:51821 | Devices, profiles and QR codes; create or revoke a device |
+| Print server | http://127.0.0.1:6631/printers/ | Queues, jobs and printer administration |
+
+<img src="docs/img/status-page.png" width="49%" alt="Uptime Kuma status page with all office services operational"> <img src="docs/img/print-queues.png" width="49%" alt="CUPS printers page showing Office-PDF and Office-Laser queues">
 
 ## Worked support cases
 
@@ -54,7 +69,9 @@ Requires Docker Desktop and Windows PowerShell 5.1 (Python 3 for the case reprod
 copy .env.example .env
 powershell -NoProfile -File homelab/bootstrap.ps1     # generates all lab passwords privately
 docker compose up -d --build
-powershell -NoProfile -File tests/homelab_check.ps1   # shares, permissions, printing, VPN peers, monitoring
+docker compose exec -T -e KUMA_PASSWORD=<KUMA_ADMIN_PASSWORD from .env> uptime node /lab/setup-kuma.js   # monitors + status page
+python homelab/vpn/demo-peers.py                     # optional: three demo device profiles
+powershell -NoProfile -File tests/homelab_check.ps1   # shares, permissions, printing, VPN peers, monitors, dashboard
 powershell -NoProfile -File tests/ad_tasks.ps1        # directory service desk tasks
 docker build -t it-support-homelab-vpn-client:14 homelab/vpn
 python tests/reproduce_cases.py                       # breaks and fixes the three faults, then cleans up

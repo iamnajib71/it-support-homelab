@@ -42,7 +42,8 @@ flowchart LR
 | WireGuard / VPN | UDP 51820 → 51820; TCP 51821 → 51821 | http://127.0.0.1:51821; `WG_ADMIN_PASSWORD` |
 | Samba / staff files | TCP 1445 → 445 | `docker compose exec fileserver sh`; Public/Scans: staff and finance; Finance: `@finance` |
 | CUPS / printing | TCP 6631 → 631 | http://127.0.0.1:6631; `print` / `CUPS_ADMIN_PASSWORD` |
-| Uptime Kuma / availability | TCP 13001 → 3001 | http://127.0.0.1:13001; create a local admin on first setup |
+| Uptime Kuma / availability | TCP 13001 → 3001 | http://127.0.0.1:13001; `admin` / `KUMA_ADMIN_PASSWORD` (created by setup-kuma.js) |
+| Homepage / office dashboard | TCP 13002 → 3000 | http://127.0.0.1:13002; config in `homelab/dashboard/` |
 | Samba 4 AD / directory | TCP 1389 → 389; 1636 → 636 | `docker compose exec directory samba-tool`; Administrator / `AD_ADMIN_PASSWORD` |
 
 All new host ports bind **127.0.0.1**. No internet forwarding or firewall changes.
@@ -117,15 +118,25 @@ the server. Office-Laser cannot physically print in this simulation.
 
 ## Uptime monitors, backup, security
 
-In Kuma choose **Add New Monitor**, HTTP(s) or TCP Port, 60-second intervals and
-three retries; save and confirm UP. Configure notifications only to an approved destination.
+Monitors and the public status page are created by script (safe to re-run; it skips monitors that already exist):
 
-| Required host monitor | Target from inside Kuma |
+```powershell
+docker compose exec -T -e KUMA_PASSWORD=<KUMA_ADMIN_PASSWORD> uptime node /lab/setup-kuma.js
+```
+
+| Monitor | Target from inside Kuma |
 |---|---|
-| AD DC :1389 | TCP directory:389 |
-| Samba :1445 | TCP fileserver:445 |
-| CUPS :6631 | HTTP http://printserver:631/printers |
-| wg-easy :51821 | HTTP http://wireguard:51821 |
+| VPN admin (wg-easy) | HTTP http://wireguard:51821 |
+| File server | TCP fileserver:445 |
+| Print server | HTTP http://printserver:631/printers/ |
+| Active Directory | TCP directory:389 and directory:88 (Kerberos) |
+| Office dashboard | HTTP http://homepage:3000 |
+
+Status page: http://127.0.0.1:13001/status/office. Sign in to Kuma as `admin` with KUMA_ADMIN_PASSWORD. To add a monitor by hand:
+**Add New Monitor**, HTTP(s) or TCP Port, 60-second interval, then add it to the status page. Configure notifications only to an
+approved destination.
+
+The office dashboard (http://127.0.0.1:13002) is configured in `homelab/dashboard/services.yaml`; edits apply on refresh.
 
 localhost inside Kuma is Kuma itself. Availability is not an end-to-end permission
 or printing test; retain the check scripts.

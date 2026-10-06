@@ -1,6 +1,6 @@
 # IT Support Homelab: a small-office network to practise service desk work end to end.
 #   VPN lab (WireGuard) - file server & storage (Samba) - print server (CUPS)
-#   directory (Samba AD DC, ITOPS.LAB) - monitoring (Uptime Kuma)
+#   directory (Samba AD DC, ITOPS.LAB) - monitoring (Uptime Kuma) - office dashboard (Homepage)
 # Start:  docker compose up -d --build      (all ports bound to 127.0.0.1 only)
 name: it-support-homelab
 
@@ -68,7 +68,19 @@ services:
     image: louislam/uptime-kuma:1
     restart: unless-stopped
     ports: ["127.0.0.1:13001:3001"]
-    volumes: [kuma_data:/app/data]
+    volumes:
+      - kuma_data:/app/data
+      - ./homelab/uptime:/lab:ro
+
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    restart: unless-stopped
+    ports: ["127.0.0.1:13002:3000"]
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: 127.0.0.1:13002,localhost:13002,homepage:3000
+      HOMEPAGE_VAR_WG_PASSWORD: ${WG_ADMIN_PASSWORD}
+    volumes:
+      - ./homelab/dashboard:/app/config
 
   directory:
     build: ./homelab/ad

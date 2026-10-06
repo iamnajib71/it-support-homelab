@@ -1,0 +1,18 @@
+# Homepage dashboard for the small-office homelab (https://gethomepage.dev)
+title: ITOPS small office
+description: Service desk view of the office network (lab simulation)
+theme: dark
+color: slate
+headerStyle: boxed
+statusStyle: dot
+hideVersion: true
+layout:
+  Office network:
+    style: row
+    columns: 3
+  Directory and monitoring:
+    style: row
+    columns: 2
+  Runbooks:
+    style: row
+    columns: 4
