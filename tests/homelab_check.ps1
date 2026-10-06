@@ -6,7 +6,7 @@ try {
     Start-LabEvidence 'homelab-check'
     foreach ($service in @('wireguard', 'fileserver', 'printserver', 'uptime')) {
         Test-LabStep "$service container running" {
-            $id = Invoke-CheckedDocker "compose ps $service" @('compose','--profile','homelab','ps','-q',$service)
+            $id = Invoke-CheckedDocker "compose ps $service" @('compose','ps','-q',$service)
             Assert-Lab (-not [string]::IsNullOrWhiteSpace($id)) 'Container missing'
             $state = Invoke-CheckedDocker "inspect $service running" @('inspect','--format','{{.State.Running}}',$id.Trim())
             Assert-Lab ($state.Trim() -eq 'true') 'Container not running'

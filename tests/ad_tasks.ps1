@@ -5,7 +5,7 @@ Push-Location $script:LabRoot
 try {
     Start-LabEvidence 'ad-tasks'
     Test-LabStep 'AD directory healthy and seeded' {
-        $id = Invoke-CheckedDocker 'compose ps directory' @('compose','--profile','homelab','ps','-q','directory')
+        $id = Invoke-CheckedDocker 'compose ps directory' @('compose','ps','-q','directory')
         $health = Invoke-CheckedDocker 'directory health' @('inspect','--format','{{.State.Health.Status}}',$id.Trim())
         Assert-Lab ($health.Trim() -eq 'healthy') 'Directory not healthy'
         $null = Invoke-CheckedDocker 'samba-tool ntacl sysvolcheck' @('compose','exec','-T','directory','samba-tool','ntacl','sysvolcheck')

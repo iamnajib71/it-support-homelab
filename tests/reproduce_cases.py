@@ -88,7 +88,7 @@ def vpn_case():
         run(["network", "connect", "--alias", "wg-case-endpoint", network, server], None)
         run(["run", "-d", "--name", client, "--network", network, "--cap-add", "NET_ADMIN",
              "--sysctl", "net.ipv4.conf.all.src_valid_mark=1", "-e", "PASSWD=" + ENV["SMB_ALICE_PASSWORD"],
-             "it-ops-lab-vpn-client:14", "-c", "sleep 600"], None)
+             "it-support-homelab-vpn-client:14", "-c", "sleep 600"], None)
         def install(text):
             run(["exec", "-i", client, "sh", "-c", "umask 077; cat > /etc/wireguard/wg0.conf"], None, input=text)
             run(["exec", client, "wg-quick", "up", "wg0"], None)
@@ -106,7 +106,7 @@ def vpn_case():
         log("PASS reproduced: handshake exists, Public inaccessible")
         run(["exec", client, "wg-quick", "down", "wg0"], None)
         install(correct)
-        log("Corrected AllowedIPs = 10.8.0.0/24, 172.18.0.0/16")
+        log("Corrected AllowedIPs = 10.8.0.0/24, 172.20.0.0/16")
         run(["exec", client, "ip", "route", "get", file_ip], "ip route get " + file_ip + " (corrected profile)")
         run(["exec", client, "timeout", "15", "smbclient", "//" + file_ip + "/Public", "-U", "alice", "-m", "SMB3", "-c", "ls"],
             "smbclient Public through WireGuard after corrected import")

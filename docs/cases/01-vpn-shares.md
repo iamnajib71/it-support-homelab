@@ -13,29 +13,29 @@ Captured commands/results (credentials redacted):
 ```text
 > VPN client: ping 10.8.0.1
 PING 10.8.0.1 (10.8.0.1): 56 data bytes
-64 bytes from 10.8.0.1: seq=0 ttl=64 time=2.040 ms
+64 bytes from 10.8.0.1: seq=0 ttl=64 time=2.766 ms
 
 --- 10.8.0.1 ping statistics ---
 1 packets transmitted, 1 packets received, 0% packet loss
-round-trip min/avg/max = 2.040/2.040/2.040 ms
+round-trip min/avg/max = 2.766/2.766/2.766 ms
 > wg show wg0 latest-handshakes (keys omitted)
-Latest handshake epoch: 1791260995
+Latest handshake epoch: 1791262528
 Stale profile AllowedIPs = 10.8.0.0/24 (office subnet omitted)
-> ip route get 172.18.0.7 (stale profile)
+> ip route get 172.20.0.3 (stale profile)
 RTNETLINK answers: Network unreachable
 > smbclient Public via stale VPN profile
-do_connect: Connection to 172.18.0.7 failed (Error NT_STATUS_NETWORK_UNREACHABLE)
+do_connect: Connection to 172.20.0.3 failed (Error NT_STATUS_NETWORK_UNREACHABLE)
 PASS reproduced: handshake exists, Public inaccessible
-Corrected AllowedIPs = 10.8.0.0/24, 172.18.0.0/16
-> ip route get 172.18.0.7 (corrected profile)
-172.18.0.7 dev wg0 src 10.8.0.2 uid 0
+Corrected AllowedIPs = 10.8.0.0/24, 172.20.0.0/16
+> ip route get 172.20.0.3 (corrected profile)
+172.20.0.3 dev wg0 src 10.8.0.2 uid 0 
     cache
 > smbclient Public through WireGuard after corrected import
-.                                   D        0  Tue Oct  6 04:25:04 2026
-  ..                                  D        0  Tue Oct  6 04:27:11 2026
-  .deleted                           DH        0  Tue Oct  6 04:25:04 2026
+.                                   D        0  Tue Oct  6 04:55:09 2026
+  ..                                  D        0  Tue Oct  6 04:54:05 2026
+  .deleted                           DH        0  Tue Oct  6 04:55:09 2026
 
-		1055762868 blocks of size 1024. 992704596 blocks available
+		1055762868 blocks of size 1024. 992649916 blocks available
 PASS VPN routing restored; authenticated share listing succeeds
 PASS temporary VPN peer revoked and isolated client/network removed
 ```
@@ -50,4 +50,4 @@ PASS temporary VPN peer revoked and isolated client/network removed
 
 **Prevent recurrence:** Record device/peer ownership, revoke peers on rebuild, and test handshake plus share access on onboarding. Publish the intranet server IP; Docker DNS names alone are not client DNS.
 
-Full reproduction: [redacted transcript](../evidence/support-cases-20261006-152953.txt); rerun python tests/reproduce_cases.py.
+Full reproduction: [redacted transcript](../evidence/support-cases-20261006-155525.txt); rerun python tests/reproduce_cases.py.

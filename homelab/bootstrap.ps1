@@ -3,7 +3,7 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $path = Join-Path $root '.env'
-if (-not (Test-Path -LiteralPath $path)) { throw 'Copy .env.example to .env and configure the core credentials first.' }
+if (-not (Test-Path -LiteralPath $path)) { throw 'Copy .env.example to .env first (values can stay empty).' }
 $text = [IO.File]::ReadAllText($path)
 $values = @{}
 foreach ($line in ($text -split '\r?\n')) {
@@ -15,13 +15,18 @@ function New-LabPassword {
     try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
     return ('Aa1!' + [BitConverter]::ToString($bytes).Replace('-', '').ToLowerInvariant())
 }
-foreach ($key in @('WG_ADMIN_PASSWORD','AD_ADMIN_PASSWORD','AD_ALICE_PASSWORD','AD_BOB_PASSWORD','AD_CAROL_PASSWORD','CUPS_ADMIN_PASSWORD')) {
+foreach ($key in @('SMB_ALICE_PASSWORD','SMB_BOB_PASSWORD','WG_ADMIN_PASSWORD','AD_ADMIN_PASSWORD','AD_ALICE_PASSWORD','AD_BOB_PASSWORD','AD_CAROL_PASSWORD','CUPS_ADMIN_PASSWORD')) {
     if (-not $values[$key]) {
         $values[$key] = New-LabPassword
         if ($text -match ("(?m)^" + $key + '=')) {
             $text = [regex]::Replace($text, ("(?m)^" + $key + '=[^\r\n]*'), ($key + '=' + $values[$key]))
         } else { $text = $text.TrimEnd() + [Environment]::NewLine + $key + '=' + $values[$key] + [Environment]::NewLine }
     }
+}
+if (-not $values['WG_HOST']) {
+    $values['WG_HOST'] = 'localhost'
+    $text = [regex]::Replace($text, '(?m)^WG_HOST=[^
+]*', 'WG_HOST=localhost')
 }
 if (-not $values['WG_PASSWORD_HASH']) {
     $output = & docker run --rm ghcr.io/wg-easy/wg-easy:14 wgpw $values['WG_ADMIN_PASSWORD'] 2>&1

@@ -11,18 +11,18 @@
 Captured commands/results (credentials redacted):
 
 ```text
-> Create approved lab Finance starter fin4ee32528 (password omitted)
-Added user fin4ee32528.
+> Create approved lab Finance starter fin3a2a5161 (password omitted)
+Added user fin3a2a5161.
 > Starter can authenticate and list Public
-.                                   D        0  Tue Oct  6 04:25:04 2026
-  ..                                  D        0  Tue Oct  6 04:27:11 2026
-  .deleted                           DH        0  Tue Oct  6 04:25:04 2026
+.                                   D        0  Tue Oct  6 04:55:09 2026
+  ..                                  D        0  Tue Oct  6 04:54:05 2026
+  .deleted                           DH        0  Tue Oct  6 04:55:09 2026
 
-		1055762868 blocks of size 1024. 992704696 blocks available
+		1055762868 blocks of size 1024. 992650016 blocks available
 > Starter Finance access before group assignment
 tree connect failed: NT_STATUS_ACCESS_DENIED
 > id starter; effective Finance share ACL
-uid=1000(fin4ee32528) gid=1101(staff) groups=1101(staff),1101(staff)
+uid=1000(fin3a2a5161) gid=1101(staff) groups=1101(staff),1101(staff)
 [Finance]
 	comment = Finance team only
 	delete veto files = Yes
@@ -34,13 +34,13 @@ uid=1000(fin4ee32528) gid=1101(staff) groups=1101(staff),1101(staff)
 
 [Scans]
 > Manager-approved fix: add starter to finance; refresh identity cache
-uid=1000(fin4ee32528) gid=1101(staff) groups=1101(staff),1100(finance),1101(staff)
+uid=1000(fin3a2a5161) gid=1101(staff) groups=1101(staff),1100(finance),1101(staff)
 > Starter Finance write/read/delete succeeds after group membership
-putting file /tmp/fin4ee32528.txt as \fin4ee32528.txt (20.5 kb/s) (average 20.5 kb/s)
-getting file \fin4ee32528.txt of size 21 as /tmp/fin4ee32528-download.txt (20.5 KiloBytes/sec) (average 20.5 KiloBytes/sec)
+putting file /tmp/fin3a2a5161.txt as \fin3a2a5161.txt (20.5 kb/s) (average 20.5 kb/s)
+getting file \fin3a2a5161.txt of size 21 as /tmp/fin3a2a5161-download.txt (20.5 KiloBytes/sec) (average 20.5 KiloBytes/sec)
 PASS Finance starter fault reproduced and repaired
 > Remove temporary starter account
-Deleted user fin4ee32528.
+Deleted user fin3a2a5161.
 ```
 
 **Root cause:** The starter belonged to staff but was missing finance. Finance permits @finance. The standalone server is separate from the AD lab: GG-Finance membership alone does not grant this share.
@@ -53,4 +53,4 @@ Deleted user fin4ee32528.
 
 **Prevent recurrence:** Include manager-approved file groups in the starter checklist and test with the new user's credentials. Maintain separate AD and Samba account records until domain integration.
 
-Full reproduction: [redacted transcript](../evidence/support-cases-20261006-152953.txt); rerun python tests/reproduce_cases.py.
+Full reproduction: [redacted transcript](../evidence/support-cases-20261006-155525.txt); rerun python tests/reproduce_cases.py.
