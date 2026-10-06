@@ -73,8 +73,8 @@ services:
       WG_HOST: ${WG_HOST}
       PASSWORD_HASH: ${WG_PASSWORD_HASH}
       WG_DEFAULT_DNS: 1.1.1.1
-      WG_ALLOWED_IPS: 10.8.0.0/24, 172.30.0.0/16
-    ports: ["51820:51820/udp", "51821:51821/tcp"]
+      WG_ALLOWED_IPS: 10.8.0.0/24, 172.18.0.0/16
+    ports: ["127.0.0.1:51820:51820/udp", "127.0.0.1:51821:51821/tcp"]
     cap_add: [NET_ADMIN, SYS_MODULE]
     sysctls:
       net.ipv4.ip_forward: "1"
@@ -85,34 +85,72 @@ services:
     image: dperson/samba:latest
     profiles: [homelab]
     restart: unless-stopped
-    ports: ["1445:445"]
+    ports: ["127.0.0.1:1445:445"]
+    environment:
+      SMB_ALICE_PASSWORD: ${SMB_ALICE_PASSWORD}
+      SMB_BOB_PASSWORD: ${SMB_BOB_PASSWORD}
     command: >
-      -u "alice;${SMB_ALICE_PASSWORD}"
-      -u "bob;${SMB_BOB_PASSWORD}"
-      -s "Public;/shares/public;yes;no;yes;all;none;;Company-wide read/write"
-      -s "Finance;/shares/finance;yes;no;no;alice;none;;Finance team only"
-      -s "Scans;/shares/scans;yes;no;no;alice,bob;none;;Scanner drop folder"
+      -u "alice;${SMB_ALICE_PASSWORD};1001;finance;1100"
+      -u "bob;${SMB_BOB_PASSWORD};1002;staff;1101"
+      -s "Public;/shares/public;yes;no;no;@staff,@finance;none;;Company-wide read/write"
+      -s "Finance;/shares/finance;yes;no;no;@finance;none;;Finance team only"
+      -s "Scans;/shares/scans;yes;no;no;@staff,@finance;none;;Scanner drop folder"
       -p
     volumes:
       - smb_public:/shares/public
       - smb_finance:/shares/finance
       - smb_scans:/shares/scans
+      - ./homelab/samba/check.sh:/lab-check.sh:ro
 
   printserver:
     image: olbat/cupsd:latest
     profiles: [homelab]
     restart: unless-stopped
-    ports: ["6631:631"]
+    ports: ["127.0.0.1:6631:631"]
+    environment:
+      CUPS_ADMIN_PASSWORD: ${CUPS_ADMIN_PASSWORD}
+    entrypoint: ["/bin/sh", "/lab-entrypoint.sh"]
     volumes:
       - ./homelab/cups/cupsd.conf:/etc/cups/cupsd.conf:ro
       - ./homelab/cups/setup-printers.sh:/setup-printers.sh:ro
+      - ./homelab/cups/entrypoint.sh:/lab-entrypoint.sh:ro
+      - ./homelab/cups/check.sh:/lab-check.sh:ro
+      - ./homelab/cups/job-completed.test:/lab-job-completed.test:ro
+      - cups_spool:/var/spool/cups
+      - cups_cache:/var/cache/cups
+      - smb_scans:/shares/scans
 
   uptime:
     image: louislam/uptime-kuma:1
     profiles: [homelab]
     restart: unless-stopped
-    ports: ["13001:3001"]
+    ports: ["127.0.0.1:13001:3001"]
     volumes: [kuma_data:/app/data]
+
+  directory:
+    build: ./homelab/ad
+    image: it-ops-lab-directory:bookworm
+    hostname: dc1
+    profiles: [homelab]
+    restart: unless-stopped
+    environment:
+      AD_ADMIN_PASSWORD: ${AD_ADMIN_PASSWORD}
+      AD_ALICE_PASSWORD: ${AD_ALICE_PASSWORD}
+      AD_BOB_PASSWORD: ${AD_BOB_PASSWORD}
+      AD_CAROL_PASSWORD: ${AD_CAROL_PASSWORD}
+    ports: ["127.0.0.1:1389:389", "127.0.0.1:1636:636"]
+    volumes:
+      - ad_data:/var/lib/samba
+      - ad_config:/etc/samba
+      - ./homelab/ad/entrypoint.sh:/lab/entrypoint.sh:ro
+      - ./homelab/ad/seed.sh:/lab/seed.sh:ro
+      - ./homelab/ad/service-desk-tasks.sh:/lab/service-desk-tasks.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "samba-tool user list >/dev/null && ldapsearch -x -H ldap://127.0.0.1 -s base -b '' defaultNamingContext >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
 volumes:
   pgdata:
@@ -122,3 +160,8 @@ volumes:
   smb_finance:
   smb_scans:
   kuma_data:
+
+  cups_spool:
+  cups_cache:
+  ad_data:
+  ad_config:

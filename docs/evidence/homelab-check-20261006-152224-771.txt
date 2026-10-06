@@ -1,0 +1,75 @@
+Lab simulation; 2026-10-06 15:22:24 Australia/Sydney
+PowerShell 5.1.26100.9549
+> compose ps wireguard
+cc40158273a2d629e9bff46bca619e251116c1802850a754f0dd24e7abf4d60a
+> inspect wireguard running
+true
+PASS wireguard container running
+> compose ps fileserver
+1b0e3d4acc2894646d3ed34bdab0610b39d873f8f87a35b6deb47205d6bc842c
+> inspect fileserver running
+true
+PASS fileserver container running
+> compose ps printserver
+2f8f20ed7e85cef07c75366fcfae8de73bf4fef04c01b9a036f2101a559c73f7
+> inspect printserver running
+true
+PASS printserver container running
+> compose ps uptime
+b3bbe67f8b8076d8649a3ed0b2ea6edbfebb0bd8fb97b56c4932a29d422c2563
+> inspect uptime running
+true
+PASS uptime container running
+> smbclient: list; Finance ACL; Public read/write
+Sharename       Type      Comment
+	---------       ----      -------
+	Public          Disk      Company-wide read/write
+	Finance         Disk      Finance team only
+	Scans           Disk      Scanner drop folder
+	IPC$            IPC       IPC Service (Samba Server)
+SMB1 disabled -- no workgroup available
+docker.exe : putting file /tmp/check-1791260547-82.txt as \check-1791260547-82.txt (16.6 kb/s) (average 16.6 kb/s)
+At H:\My Projects - IT\it-ops-lab\tests\lab_helpers.ps1:37 char:20
++         $output = (& docker @DockerArgs 2>&1 | Out-String)
++                    ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (putting file /t...rage 16.6 kb/s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+getting file \check-1791260547-82.txt of size 51 as /tmp/check-1791260547-82-download.txt (24.9 KiloBytes/sec)
+(average 24.9 KiloBytes/sec)
+PASS Alice Finance write
+tree connect failed: NT_STATUS_ACCESS_DENIED
+PASS Bob Finance denied
+putting file /tmp/check-1791260547-82.txt as \check-1791260547-82.txt (6.2 kb/s) (average 6.2 kb/s)
+getting file \check-1791260547-82.txt of size 51 as /tmp/check-1791260547-82-download.txt (24.9 KiloBytes/sec)
+(average 24.9 KiloBytes/sec)
+PASS alice Public read/write
+putting file /tmp/check-1791260547-82.txt as \check-1791260547-82.txt (16.6 kb/s) (average 16.6 kb/s)
+getting file \check-1791260547-82.txt of size 51 as /tmp/check-1791260547-82-download.txt (24.9 KiloBytes/sec)
+(average 24.9 KiloBytes/sec)
+PASS bob Public read/write
+PASS Samba shares and access control
+> lpstat; Office-PDF job; completed state and PDF artifact
+printer Office-Laser is idle.  enabled since Tue Oct  6 04:22:13 2026
+printer Office-PDF is idle.  enabled since Tue Oct  6 04:22:12 2026
+system default destination: Office-PDF
+printer Office-PDF is idle.  enabled since Tue Oct  6 04:22:12 2026
+printer Office-Laser is idle.  enabled since Tue Oct  6 04:22:13 2026
+request id is Office-PDF-1 (1 file(s))
+"/lab-job-completed.test":
+    Job completed, not cancelled or aborted                              [PASS]
+Office-PDF-1            root              1024   Tue Oct  6 04:22:28 2026
+PDF artifact: /shares/scans/pdf/check-1791260548-101__using_non-Linux-generated_files.pdf
+PASS PDF job completed (IPP job-state=9)
+PASS CUPS queues and completed test page
+GET / => HTTP 200
+GET /jobs => HTTP 200
+GET /printers => HTTP 200
+GET /admin/ without credentials => HTTP 401
+GET /admin/ as print => HTTP 200
+PASS CUPS public views and authenticated administration
+FAIL WireGuard UI and peer create/list/delete: The remote server returned an error: (401) Unauthorized.
+GET http://127.0.0.1:13001 => HTTP 200
+PASS Uptime Kuma HTTP response
+RESULT: 1 failed checks
+Evidence: H:\My Projects - IT\it-ops-lab\docs\evidence\homelab-check-20261006-152224-771.txt
