@@ -9,6 +9,20 @@ Every service is tested by scripts, and I broke and fixed three realistic faults
 
 > **Lab, not production.** All ports bind to 127.0.0.1, users are fictional, and the limits are listed at the bottom.
 
+<!-- project-overview:start -->
+## Project overview
+
+| Area | What to look for |
+| --- | --- |
+| **Problem addressed** | Staff need VPN access, department file permissions, reliable printing and clear fault diagnosis in one small-office environment. |
+| **Implemented work** | Built six connected Docker services and reproduced three support faults: missing VPN route, denied Finance access and paused print queues. Published runs record zero failed homelab and directory checks. |
+| **Skills demonstrated** | Networking, WireGuard, Samba AD, SMB permissions, CUPS, Docker, PowerShell, monitoring and support runbooks. |
+| **Demo** | [Dashboard and printer screenshots](#dashboards), then [three worked tickets](#worked-support-cases). These are recorded lab results. |
+| **How to use it** | [Run it](#run-it): bootstrap private credentials, start Compose, then run the homelab and AD checks. Expected: dashboard services up, permitted access working and unauthorised access denied. |
+| **Verification** | [Recorded results](docs/homelab-results.md) and [raw transcripts](docs/evidence/). Samba AD and simulated-printer limits are listed below. |
+
+<!-- project-overview:end -->
+
 ![Office dashboard: live status of the VPN, file server, print server, directory and monitoring](docs/img/dashboard.png)
 
 ## Start here (2 minutes)
