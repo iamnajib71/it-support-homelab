@@ -1,31 +1,39 @@
-# IT Support Homelab: VPN, file server, print server and Active Directory
+# IT Support Homelab
 
-A small-office IT environment I built and support end to end, running in Docker on one Windows PC. It has three labs that
-work together the way a real office does (staff connect over the **VPN**, open the **file shares**, and print to the **print
-server** that drops PDFs into the Scans share), plus a **directory server** for account administration, **monitoring**, and an
-**office dashboard** that shows the whole office on one page.
+I built a simulated small office where staff connect remotely, share files and print, then documented how I diagnose and repair interruptions to those services.
 
-Every service is tested by scripts, and I broke and fixed three realistic faults on purpose, documented as service desk tickets.
+![Office dashboard with service status](docs/img/dashboard.png)
 
-> **Lab, not production.** All ports bind to 127.0.0.1, users are fictional, and the limits are listed at the bottom.
+[Configuration](docker-compose.yml) · [Recorded test results](docs/homelab-results.md)
 
-<!-- project-overview:start -->
-## Project overview
+## At a glance
 
-| Area | What to look for |
+| Area | Evidence-backed summary |
 | --- | --- |
-| **Problem addressed** | Staff need VPN access, department file permissions, reliable printing and clear fault diagnosis in one small-office environment. |
-| **Implemented work** | Built six connected Docker services and reproduced three support faults: missing VPN route, denied Finance access and paused print queues. Published runs record zero failed homelab and directory checks. |
-| **Skills demonstrated** | Networking, WireGuard, Samba AD, SMB permissions, CUPS, Docker, PowerShell, monitoring and support runbooks. |
-| **Demo** | [Dashboard and printer screenshots](#dashboards), then [three worked tickets](#worked-support-cases). These are recorded lab results. |
-| **How to use it** | [Run it](#run-it): bootstrap private credentials, start Compose, then run the homelab and AD checks. Expected: dashboard services up, permitted access working and unauthorised access denied. |
-| **Verification** | [Recorded results](docs/homelab-results.md) and [raw transcripts](docs/evidence/). Samba AD and simulated-printer limits are listed below. |
+| **The problem** | In this simulated office, remote staff can connect to the VPN but still lose access to shared work; new starters can be denied Finance files and a paused print queue can stop the office printing, costing staff and support time. |
+| **What I built** | I built the VPN, file and print services, directory administration, monitoring and office dashboard. I reproduced support faults, diagnosed them and recorded the repairs. |
+| **Results** | [Homelab and directory checks reported zero failures; all 3 support cases were reproduced and repaired](docs/homelab-results.md). These are recorded lab results, not customer service metrics. |
+| **Skills shown** | Service desk, troubleshooting, Docker, WireGuard, Samba Active Directory, file permissions, CUPS, PowerShell, monitoring and technical documentation. |
+| **Relevant roles** | Service Desk Analyst, Desktop Support, IT Support Technician, Junior Systems Administrator. |
+| **How it was built** | Designed, specified and reviewed by me; built with Codex as my coding agent (vibe coding). Verification and its limits are linked below. |
+| **Try it / evidence** | [Dashboard](docs/img/dashboard.png) · [Runbook](docs/homelab-runbook.md) · [Results and transcripts](docs/homelab-results.md) · [Run it](#run-it) |
 
-<!-- project-overview:end -->
+## What I did, step by step
 
-![Office dashboard: live status of the VPN, file server, print server, directory and monitoring](docs/img/dashboard.png)
+1. Mapped a small office to remote access, shared files and printing, then isolated the services with [Docker Compose](docker-compose.yml).
+2. Configured per-device VPN access and department share permissions; checked both permitted and denied operations.
+3. Set up the PDF print queue and directory account tasks, with [runbook procedures](docs/homelab-runbook.md) for handover.
+4. Added monitoring and a dashboard so an operator could see service status before investigating a ticket.
+5. Injected routing, group-membership and print-queue faults, then captured diagnosis, repair and verification in the [worked cases](#worked-support-cases).
+6. Ran the support and directory checks and published the [redacted transcripts](docs/evidence/).
 
-## Start here (2 minutes)
+## Problems I hit and how I solved them
+
+- **VPN administration rejected the password hash:** corrected parsing of Windows line endings and verified login. [Build record](docs/homelab-results.md#problems-solved-while-building-it).
+- **Samba AD could not store Windows ACLs in the container:** switched to the supported xattr TDB backend and checked SYSVOL ACLs. [Build record](docs/homelab-results.md#problems-solved-while-building-it).
+- **A VPN handshake did not mean files were reachable:** traced the missing office route, corrected AllowedIPs and verified authenticated share access. [Worked ticket](docs/cases/01-vpn-shares.md).
+
+## Start here
 
 | If you want to see… | Open |
 |---|---|
@@ -91,7 +99,7 @@ docker build -t it-support-homelab-vpn-client:14 homelab/vpn
 python tests/reproduce_cases.py                       # breaks and fixes the three faults, then cleans up
 ```
 
-Latest run (6 October 2026): homelab checks **0 failures**, AD tasks **0 failures**, all three cases reproduced, fixed and cleaned up.
+[Recorded run (6 October 2026)](docs/homelab-results.md): homelab checks **0 failures**, AD tasks **0 failures**, all three cases reproduced, fixed and cleaned up.
 
 ## Honest limits
 
@@ -105,4 +113,6 @@ Latest run (6 October 2026): homelab checks **0 failures**, AD tasks **0 failure
 [IT Ops Lab](https://github.com/iamnajib71/it-ops-lab) is an AI service-desk copilot (n8n, hybrid RAG, rule-based approval gate)
 that answers tickets about this same office using the same user guides.
 
-Built by Nazmul Hassan: [LinkedIn](https://www.linkedin.com/in/iamnajib71) · [GitHub](https://github.com/iamnajib71)
+## Built by Nazmul Hassan
+
+[LinkedIn](https://www.linkedin.com/in/iamnajib71) · [GitHub](https://github.com/iamnajib71)
