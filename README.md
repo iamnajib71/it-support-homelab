@@ -15,7 +15,6 @@ I built a simulated small office where staff connect remotely, share files and p
 | **Results** | [Homelab and directory checks reported zero failures; all 3 support cases were reproduced and repaired](docs/homelab-results.md). These are recorded lab results, not customer service metrics. |
 | **Skills shown** | Service desk, troubleshooting, Docker, WireGuard, Samba Active Directory, file permissions, CUPS, PowerShell, monitoring and technical documentation. |
 | **Relevant roles** | Service Desk Analyst, Desktop Support, IT Support Technician, Junior Systems Administrator. |
-| **How it was built** | Designed, specified and reviewed by me; built with Codex as my coding agent (vibe coding). Verification and its limits are linked below. |
 | **Try it / evidence** | [Dashboard](docs/img/dashboard.png) · [Runbook](docs/homelab-runbook.md) · [Results and transcripts](docs/homelab-results.md) · [Run it](#run-it) |
 
 ## What I did, step by step
